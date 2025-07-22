@@ -1,103 +1,138 @@
-import Image from "next/image";
+'use client';
+
+import React, {useState} from "react";
+import {stories} from "./storiesData";
+
+// const tryingFun = list.map(function (item) {
+//     return item.title + "\n" + item.num_comments + "\n";
+// })
+
+type SearchProps = {
+  value: string;
+  whenChanges: (event: React.ChangeEvent<HTMLInputElement>) => void;
+};
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const [a, setA] = useState(
+      localStorage.getItem('search') || ''
+  );
+  const [number, setNumber] = useState(0);
+
+  const handleSearch = (event) => {
+    setA(event.target.value);
+
+    localStorage.setItem('search', event.target.value);
+  };
+
+  const handleClick = () => {
+    setNumber(number + 1);
+  }
+  const searchedStories = stories.filter((story) =>
+      story.title.toLowerCase().includes(a.toLowerCase())
+  );
+
+
+  return (
+      <div className="min-h-screen bg-[rgb(240,230,140)] p-8">
+        <div className="max-w-4xl mx-auto bg-[rgb(255,255,255,0.9)] rounded-lg shadow-lg p-6">
+          <h1 className="text-4xl font-bold text-[rgb(75,30,47)] mb-6 text-center">Tech Stories</h1>
+
+          <div className="flex items-center justify-between mb-8">
+            <button
+                onClick={handleClick}
+                className="bg-[rgb(192,57,43)] hover:bg-[rgb(212,160,23)] text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 shadow"
+            >
+              Test you mouse
+            </button>
+            <div className="bg-[rgb(212,160,23)] text-[rgb(75,30,47)] py-2 rounded-lg shadow w-40 text-center">
+              <h2 className="text-2xl font-semibold">Counter: {number}</h2>
+            </div>
+          </div>
+
+          <Search value={a} whenChanges={handleSearch}/>
+
+          <List list={searchedStories}/>
+
+          <hr className="my-6 border-[rgb(47,79,79)] opacity-30"/>
+
+          <form
+              onSubmit={e => {
+                e.preventDefault();
+                alert('Submitting!');
+              }}
+              className="mt-6"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <button
+                type="submit"
+                className="w-full bg-[rgb(44,62,80)] hover:bg-[rgb(47,79,79)] text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 shadow"
+            >
+              Submit Form
+            </button>
+          </form>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
   );
 }
+
+const Search = ({value, whenChanges}: SearchProps) => (
+    <div className="mb-8">
+      <label htmlFor="search" className="block text-[rgb(75,30,47)] font-medium mb-2">Search Stories:</label>
+      <input
+          id="search"
+          type="text"
+          value={value}
+          onChange={whenChanges}
+          className="w-full p-3 border-2 border-[rgb(212,160,23)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(192,57,43)] focus:border-transparent"
+          placeholder="Type to search..."
+      />
+    </div>
+);
+// const Search = (props) => {
+//     const {value, whenChanges} = props;
+//
+//     return (
+//         <div>
+//             <label htmlFor="search">Search: </label>
+//             <input id="search" type="text" value={value} onChange={whenChanges}/>
+//         </div>
+//     );
+// };
+
+const List = ({list}) => (
+    <ul className="space-y-4">
+      {list.map((item) => (
+          <Item key={item.objectID} {...item} />
+      ))}
+    </ul>
+);
+
+
+const Item = ({title, url, author, num_comments, points, objectID}) => (
+    <li className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 border border-[rgb(240,230,140)]">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div className="mb-2  md:mb-0">
+          <a
+              href={url}
+              className="text-lg font-semibold text-[rgb(44,62,80)] hover:text-[rgb(192,57,43)] transition-colors duration-300"
+              target="_blank"
+              rel="noopener noreferrer"
+          >
+            {title}
+          </a>
+          <p className="text-sm text-gray-600">by {author}</p>
+        </div>
+        <div className="flex items-center space-x-2">
+                <span className="bg-[rgb(240,230,140)] text-[rgb(75,30,47)] px-2 py-1 rounded text-xs font-medium w-30 text-center">
+                    Comments: {num_comments}
+                </span>
+          <span className="bg-[rgb(212,160,23)] text-white px-2 py-1 rounded text-xs font-medium w-20 text-center">
+                    Points: {points}
+                </span>
+          <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs font-medium w-15 text-center">
+                    ID: {objectID}
+                </span>
+        </div>
+      </div>
+    </li>
+);
