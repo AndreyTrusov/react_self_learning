@@ -11,7 +11,7 @@ import {useStorageState} from "@/app/useStorageState";
 type SearchProps = {
     id: string;
     label: string;
-    type: string;
+    type?: string;
     value: string;
     onInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 };
@@ -84,8 +84,8 @@ const InputWithLabel = ({
                             id,
                             label,
                             value,
+                            onInputChange,
                             type = 'text',
-                            onInputChange
                         }: SearchProps) => (
     <div className="mb-8">
         <label htmlFor={id} className="block text-[rgb(75,30,47)] font-medium mb-2">{label}</label>
