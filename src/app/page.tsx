@@ -1,7 +1,7 @@
 'use client';
 
-import React, {useEffect, useState} from "react";
-import {stories, Story} from "./storiesData";
+import React, {useEffect, useRef, useState} from "react";
+import {initialStories, Story} from "./storiesData";
 import {useStorageState} from "@/app/useStorageState";
 
 // const tryingFun = list.map(function (item) {
@@ -14,10 +14,13 @@ type SearchProps = {
     type?: string;
     value: string;
     onInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    children?: React.ReactNode;
+    isFocused?: boolean;
 };
 
 type ListType = {
     list: Story[];
+    onRemoveItem: (id: Story) => void;
 }
 
 export default function Home() {
@@ -33,10 +36,20 @@ export default function Home() {
         setSearchTerm(event.target.value);
     };
 
+    const [stories, setStories] = useState(initialStories);
+
     const searchedStories = stories.filter((story) =>
         story.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const handleRemoveStory = (item: Story) => {
+        const newStories = stories.filter(
+            (story) => item.objectID !== story.objectID
+        );
+
+        setStories(newStories);
+        setSearchTerm('');
+    }
 
     return (
         <div className="min-h-screen bg-[rgb(240,230,140)] p-8">
@@ -55,9 +68,12 @@ export default function Home() {
                     </div>
                 </div>
 
-                <InputWithLabel id="search" label="Search Stories:" value={searchTerm} onInputChange={handleSearch}/>
+                <InputWithLabel id="search" label="Search Stories:" value={searchTerm} onInputChange={handleSearch}
+                                isFocused>
+                    <strong>Search:</strong>
+                </InputWithLabel>
 
-                <List list={searchedStories}/>
+                <List list={searchedStories} onRemoveItem={handleRemoveStory}/>
 
                 <hr className="my-6 border-[rgb(47,79,79)] opacity-30"/>
 
@@ -86,19 +102,38 @@ const InputWithLabel = ({
                             value,
                             onInputChange,
                             type = 'text',
-                        }: SearchProps) => (
-    <div className="mb-8">
-        <label htmlFor={id} className="block text-[rgb(75,30,47)] font-medium mb-2">{label}</label>
-        <input
-            id={id}
-            type={type}
-            value={value}
-            onChange={onInputChange}
-            className="w-full p-3 border-2 border-[rgb(212,160,23)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(192,57,43)] focus:border-transparent"
-            placeholder="Type to search..."
-        />
-    </div>
-);
+                            children,
+                            isFocused,
+                        }: SearchProps) => {
+        const inputRef = useRef<HTMLInputElement>(null);
+
+        // When this effect runs, go find the input element and focus it.
+        useEffect(() => {
+            if (isFocused && inputRef.current) {
+                inputRef.current.focus();
+                // inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, [isFocused]);
+
+        return (<>
+            <div className="mb-8">
+                <label htmlFor={id}
+                       className="block text-[rgb(75,30,47)] font-medium mb-2">{children}</label>
+                <input
+                    id={id}
+                    type={type}
+                    ref={inputRef}
+                    value={value}
+                    onChange={onInputChange}
+                    autoFocus={isFocused}
+                    className="w-full p-3 border-2 border-[rgb(212,160,23)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(192,57,43)] focus:border-transparent"
+                    placeholder="Type to search..."
+                />
+            </div>
+        </>);
+
+    }
+;
 // const Search = (props) => {
 //     const {value, whenChanges} = props;
 //
@@ -110,42 +145,61 @@ const InputWithLabel = ({
 //     );
 // };
 
-const List = ({list}: ListType) => (
+const List = ({list, onRemoveItem}: ListType) => (
     <ul className="space-y-4">
         {list.map((item) => (
-            <Item key={item.objectID} {...item} />
+            // <Item key={item.objectID} onRemoveItem={onRemoveItem} {...item}/>
+            <Item key={item.objectID} onRemoveItem={onRemoveItem} item={item}/>
         ))}
     </ul>
 );
 
 
-const Item = ({title, url, author, num_comments, points, objectID}: Story) => (
-    <li className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 border border-[rgb(240,230,140)]">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div className="mb-2  md:mb-0">
-                <a
-                    href={url}
-                    className="text-lg font-semibold text-[rgb(44,62,80)] hover:text-[rgb(192,57,43)] transition-colors duration-300"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    {title}
-                </a>
-                <p className="text-sm text-gray-600">by {author}</p>
-            </div>
-            <div className="flex items-center space-x-2">
+const Item = ({ item, onRemoveItem }: { item: Story; onRemoveItem: (item: Story) => void }) => {
+    const handleRemoveItem = () => {
+        onRemoveItem(item);
+    };
+
+    // const { title, url, author, num_comments, points, objectID } = item;
+
+    return (
+        <>
+            <li className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 border border-[rgb(240,230,140)]">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                    <div className="mb-2  md:mb-0">
+                        <a
+                            href={item.url}
+                            className="text-lg font-semibold text-[rgb(44,62,80)] hover:text-[rgb(192,57,43)] transition-colors duration-300"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            {item.title}
+                        </a>
+                        <p className="text-sm text-gray-600">by {item.author}</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
                 <span
                     className="bg-[rgb(240,230,140)] text-[rgb(75,30,47)] px-2 py-1 rounded text-xs font-medium w-30 text-center">
-                    Comments: {num_comments}
+                    Comments: {item.num_comments}
                 </span>
-                <span
-                    className="bg-[rgb(212,160,23)] text-white px-2 py-1 rounded text-xs font-medium w-20 text-center">
-                    Points: {points}
+                        <span
+                            className="bg-[rgb(212,160,23)] text-white px-2 py-1 rounded text-xs font-medium w-20 text-center">
+                    Points: {item.points}
                 </span>
-                <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs font-medium w-15 text-center">
-                    ID: {objectID}
+                        <span
+                            className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs font-medium w-15 text-center">
+                    ID: {item.objectID}
                 </span>
-            </div>
-        </div>
-    </li>
-);
+                        <button
+                            type="button"
+                            onClick={handleRemoveItem}
+                            className="bg-red-700 hover:bg-red-900 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400"
+                        >
+                            Dismiss
+                        </button>
+                    </div>
+                </div>
+            </li>
+        </>
+    )
+};

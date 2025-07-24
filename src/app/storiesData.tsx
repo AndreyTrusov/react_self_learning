@@ -7,7 +7,7 @@ export interface Story {
     objectID: number;
 }
 
-export const stories: Story[] = [
+export const initialStories: Story[] = [
     {
         title: 'JavaScript: The Good Parts',
         url: 'https://www.amazon.com/JavaScript-Good-Parts-Douglas-Crockford/dp/0596517742',
