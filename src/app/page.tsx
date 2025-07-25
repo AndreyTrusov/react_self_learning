@@ -23,6 +23,29 @@ type ListType = {
     onRemoveItem: (id: Story) => void;
 }
 
+type StoriesAction =
+    | { type: 'SET_STORIES'; payload: Story[] }
+    | { type: 'REMOVE_STORY'; payload: Story }
+
+const getAsyncStories = (): Promise<{ data: { stories: Story[] } }> =>
+    new Promise((resolve) =>
+        setTimeout(() => resolve({data: {stories: initialStories}}),
+            2000
+        )
+    );
+
+const storiesReducer = (state: Story[], action: StoriesAction) => {
+    switch (action.type) {
+        case 'SET_STORIES':
+            return action.payload;
+        case 'REMOVE_STORY':
+            return state.filter(
+                (story) => action.payload.objectID !== story.objectID
+            ); default:
+            throw new Error();
+    }
+};
+
 export default function Home() {
     const [number, setNumber] = useState(0);
     const handleClick = () => {
@@ -36,18 +59,50 @@ export default function Home() {
         setSearchTerm(event.target.value);
     };
 
-    const [stories, setStories] = useState(initialStories);
+
+    // Asynchronous Data
+    // const [stories, setStories] = useState(initialStories);
+
+    // const [stories, setStories] = useState<Story[]>([]);
+    const [isLoading, setIsLoading] = React.useState(false);
+    const [isError, setIsError] = React.useState(false);
+
+    useEffect(() => {
+        setIsLoading(true);
+        getAsyncStories().then(result => {
+            // setStories(result.data.stories);
+            dispatchStories({
+                type: 'SET_STORIES',
+                payload: result.data.stories,
+            });
+            setIsLoading(false);
+        })
+            .catch(() => setIsError(true));
+    }, []);
+
+
+    // Advanced State
+
+    const [stories, dispatchStories] = React.useReducer(
+        storiesReducer,
+        []
+    );
 
     const searchedStories = stories.filter((story) =>
         story.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const handleRemoveStory = (item: Story) => {
-        const newStories = stories.filter(
-            (story) => item.objectID !== story.objectID
-        );
+        // const newStories = stories.filter(
+        //     (story) => item.objectID !== story.objectID
+        // );
 
-        setStories(newStories);
+        dispatchStories({
+            type: 'REMOVE_STORY',
+            payload: item,
+        });
+
+        // setStories(newStories);
         setSearchTerm('');
     }
 
@@ -73,7 +128,14 @@ export default function Home() {
                     <strong>Search:</strong>
                 </InputWithLabel>
 
-                <List list={searchedStories} onRemoveItem={handleRemoveStory}/>
+                {isError &&
+                    <p className="text-center text-gray-700 text-lg mb-6">Something went wrong ...</p>}
+
+                {isLoading ? (
+                    <p className="text-center text-gray-700 text-lg mb-6">Loading...</p>
+                ) : (
+                    <List list={searchedStories} onRemoveItem={handleRemoveStory}/>
+                )}
 
                 <hr className="my-6 border-[rgb(47,79,79)] opacity-30"/>
 
@@ -105,35 +167,34 @@ const InputWithLabel = ({
                             children,
                             isFocused,
                         }: SearchProps) => {
-        const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
-        // When this effect runs, go find the input element and focus it.
-        useEffect(() => {
-            if (isFocused && inputRef.current) {
-                inputRef.current.focus();
-                // inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }, [isFocused]);
+    // When this effect runs, go find the input element and focus it.
+    useEffect(() => {
+        if (isFocused && inputRef.current) {
+            inputRef.current.focus();
+            // inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, [isFocused]);
 
-        return (<>
-            <div className="mb-8">
-                <label htmlFor={id}
-                       className="block text-[rgb(75,30,47)] font-medium mb-2">{children}</label>
-                <input
-                    id={id}
-                    type={type}
-                    ref={inputRef}
-                    value={value}
-                    onChange={onInputChange}
-                    autoFocus={isFocused}
-                    className="w-full p-3 border-2 border-[rgb(212,160,23)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(192,57,43)] focus:border-transparent"
-                    placeholder="Type to search..."
-                />
-            </div>
-        </>);
+    return (<>
+        <div className="mb-8">
+            <label htmlFor={id}
+                   className="block text-[rgb(75,30,47)] font-medium mb-2">{children}</label>
+            <input
+                id={id}
+                type={type}
+                ref={inputRef}
+                value={value}
+                onChange={onInputChange}
+                autoFocus={isFocused}
+                className="w-full p-3 border-2 border-[rgb(212,160,23)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(192,57,43)] focus:border-transparent"
+                placeholder="Type to search..."
+            />
+        </div>
+    </>);
 
-    }
-;
+};
 // const Search = (props) => {
 //     const {value, whenChanges} = props;
 //
@@ -155,7 +216,7 @@ const List = ({list, onRemoveItem}: ListType) => (
 );
 
 
-const Item = ({ item, onRemoveItem }: { item: Story; onRemoveItem: (item: Story) => void }) => {
+const Item = ({item, onRemoveItem}: { item: Story; onRemoveItem: (item: Story) => void }) => {
     const handleRemoveItem = () => {
         onRemoveItem(item);
     };
