@@ -1,12 +1,15 @@
 'use client';
 
 import React, {ChangeEvent, ReactNode, useEffect, useReducer, useRef, useState} from "react";
-import {initialStories, Story} from "./storiesData";
+// import {initialStories, Story} from "./storiesData";
+import {Story} from "./storiesData";
 import {useStorageState} from "@/app/useStorageState";
 
 // const tryingFun = list.map(function (item) {
 //     return item.title + "\n" + item.num_comments + "\n";
 // })
+
+const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
 type SearchProps = {
     id: string;
@@ -36,17 +39,17 @@ type StoriesState = {
     isError: boolean;
 };
 
-const getAsyncStories = (): Promise<{ data: { stories: Story[] } }> =>
+// const getAsyncStories = (): Promise<{ data: { stories: Story[] } }> =>
     // new Promise((resolve, reject) =>
     //     setTimeout(reject,
     //         2000
     //     )
     // );
-    new Promise((resolve) =>
-        setTimeout(() => resolve({data: {stories: initialStories}}),
-            2000
-        )
-    );
+    // new Promise((resolve) =>
+    //     setTimeout(() => resolve({data: {stories: initialStories}}),
+    //         2000
+    //     )
+    // );
 
 const storiesReducer = (state: StoriesState, action: StoriesAction): StoriesState => {
     switch (action.type) {
@@ -93,20 +96,36 @@ export default function Home() {
     const [isError, setIsError] = useState(false);
 
     useEffect(() => {
+        const term = searchTerm || 'react'
         // setIsLoading(true);
         dispatchStories({type: 'FETCH_INIT'});
 
-        getAsyncStories()
+        fetch(`${API_ENDPOINT}${term}`)
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('error');
+                }
+                return response.json();
+            })
             .then(result => {
-            // setStories(result.data.stories);
-            dispatchStories({
-                type: 'SET_STORIES',
-                payload: result.data.stories,
-            });
-            setIsLoading(false);
-        })
+                dispatchStories({
+                    type: 'SET_STORIES',
+                    payload: result.hits,
+                });
+            })
             .catch(() => dispatchStories({type: 'FETCH_FAILURE'}));
-    }, []);
+
+        // getAsyncStories()
+        //     .then(result => {
+        //     // setStories(result.data.stories);
+        //     dispatchStories({
+        //         type: 'SET_STORIES',
+        //         payload: result.data.stories,
+        //     });
+        //     setIsLoading(false);
+        // })
+        //     .catch(() => dispatchStories({type: 'FETCH_FAILURE'}));
+    }, [searchTerm]);
 
 
     // Advanced State
@@ -144,15 +163,20 @@ export default function Home() {
                         onClick={handleClick}
                         className="bg-[rgb(192,57,43)] hover:bg-[rgb(212,160,23)] text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 shadow"
                     >
-                        Test you mouse
+                        Test your mouse
                     </button>
                     <div className="bg-[rgb(212,160,23)] text-[rgb(75,30,47)] py-2 rounded-lg shadow w-40 text-center">
                         <h2 className="text-2xl font-semibold">Counter: {number}</h2>
                     </div>
                 </div>
 
-                <InputWithLabel id="search" label="Search Stories:" value={searchTerm} onInputChange={handleSearch}
-                                isFocused>
+                <InputWithLabel
+                    id="search"
+                    label="Search Stories:"
+                    value={searchTerm}
+                    onInputChange={handleSearch}
+                    isFocused
+                >
                     <strong>Search:</strong>
                 </InputWithLabel>
 
@@ -162,7 +186,7 @@ export default function Home() {
                 {stories.isLoading ? (
                     <p className="text-center text-gray-700 text-lg mb-6">Loading...</p>
                 ) : (
-                    <List list={searchedStories} onRemoveItem={handleRemoveStory}/>
+                    <List list={stories.data} onRemoveItem={handleRemoveStory}/>
                 )}
 
                 <hr className="my-6 border-[rgb(47,79,79)] opacity-30"/>
@@ -272,17 +296,17 @@ const Item = ({item, onRemoveItem}: { item: Story; onRemoveItem: (item: Story) =
                     Comments: {item.num_comments}
                 </span>
                         <span
-                            className="bg-[rgb(212,160,23)] text-white px-2 py-1 rounded text-xs font-medium w-20 text-center">
+                            className="bg-[rgb(212,160,23)] text-white px-2 py-1 rounded text-xs font-medium w-25 text-center">
                     Points: {item.points}
                 </span>
                         <span
-                            className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs font-medium w-15 text-center">
+                            className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs font-medium w-25 text-center">
                     ID: {item.objectID}
                 </span>
                         <button
                             type="button"
                             onClick={handleRemoveItem}
-                            className="bg-red-700 hover:bg-red-900 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400"
+                            className="bg-red-700 hover:bg-red-900 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm h-8 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400"
                         >
                             Dismiss
                         </button>
